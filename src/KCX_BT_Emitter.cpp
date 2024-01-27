@@ -1,5 +1,5 @@
 /*
- * KCX_BT_Emitter.cpp
+ * KCX_BT_Emitter.cpp/home/wolle/Arduino/KCX_BT_EMITTER/src/KCX_BT_Emitter.h
  *
  *  Created on: 21.01.2024
  *  updated on: 27.01.2024
@@ -55,10 +55,6 @@ void KCX_BT_Emitter::begin(){
     m_f_btEmitter_found = false;
     m_bt_add_num = 0;
     m_bt_name_num = 0;
-    addQueueItem("AT+GMR?");      // get version
-    addQueueItem("AT+VMLINK?");   // get all mem vmlinks
-    addQueueItem("AT+VOL?");      // get volume (in receiver mode 0 ... 31)
-    addQueueItem("AT+BT_MODE?");  // transmitter or receiver
 }
 
 void KCX_BT_Emitter::loop(){
