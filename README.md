@@ -22,6 +22,10 @@ char buff[100];
 void setup() {
   Serial.begin(115200);
   bt_emitter.begin();
+  bt_emitter.userCommand("AT+GMR?");      // get version
+  bt_emitter.userCommand("AT+VMLINK?");   // get all mem vmlinks
+  bt_emitter.userCommand("AT+VOL?");      // get volume (in receiver mode 0 ... 31)
+  bt_emitter.userCommand("AT+BT_MODE?");  // transmitter or receiver
 }
 
 void loop() {
