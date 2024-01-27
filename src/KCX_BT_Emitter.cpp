@@ -1,5 +1,5 @@
 /*
- * KCX_BT_Emitter.cpp/home/wolle/Arduino/KCX_BT_EMITTER/src/KCX_BT_Emitter.h
+ *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
  *  updated on: 27.01.2024
