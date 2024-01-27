@@ -1,12 +1,18 @@
+# ESP32 KCX_BT_EMITTER
+
+![KCX_BT_EMITTER](https://github.com/schreibfaul1/ESP32-KCX-BT-EMITTER/assets/26044260/4857e72a-ae46-493c-8352-fbcc0a9edc78)
+![KCX_BT_EMITTER_back](https://github.com/schreibfaul1/ESP32-KCX-BT-EMITTER/assets/26044260/c884e1fb-5922-4dd6-a23b-bdfb6ad25d2d)
+![image](https://github.com/schreibfaul1/ESP32-KCX-BT-EMITTER/assets/26044260/9d4e56c2-2904-44a2-a356-20bae7a136a3)
+
 example:
 ````c++
 #include "Arduino.h"
 #include "src/KCX_BT_Emitter.h"
 
-#define BT_EMITTER_RX    45  // TX pin - KCX Bluetooth Transmitter (-1 if not available)
-#define BT_EMITTER_TX    38  // RX pin - KCX Bluetooth Transmitter (-1 if not available)
-#define BT_EMITTER_LINK  19  // high if connected                  (-1 if not available)
-#define BT_EMITTER_MODE  20  // high transmit - low receive        (-1 if not available)
+#define BT_EMITTER_RX    45  // TX pin - KCX Bluetooth Transmitter
+#define BT_EMITTER_TX    38  // RX pin - KCX Bluetooth Transmitter
+#define BT_EMITTER_LINK  19  // high if connected
+#define BT_EMITTER_MODE  20  // high transmit - low receive
 
 
 KCX_BT_Emitter  bt_emitter(BT_EMITTER_RX, BT_EMITTER_TX, BT_EMITTER_LINK, BT_EMITTER_MODE);
