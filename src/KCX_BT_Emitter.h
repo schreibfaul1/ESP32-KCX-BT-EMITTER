@@ -2,7 +2,7 @@
  * KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 27.01.2024
+ *  updated on: 29.01.2024
  *      Author: Wolle
  */
 
@@ -69,7 +69,7 @@ class KCX_BT_Emitter {
     void        getVMlinks();                  // get all saved VM links
     void        addLinkName(const char* name); // up to 10 names can be saved
     void        addLinkAddr(const char* addr); // up to 10 MAC addresses can be saved
-    bool        isConnected() { return m_f_status; }
+    bool        isConnected() { return digitalRead(BT_EMITTER_LINK); }
     uint8_t     getVolume() { return m_bt_volume; }
     void        setVolume(uint8_t vol);
     const char* getMode();
@@ -82,7 +82,7 @@ class KCX_BT_Emitter {
     const char* stringifyScannedItems();
 
     enum btmode { BT_MODE_RECEIVER = 0, BT_MODE_EMITTER = 1 };
-    enum btconn { BT_NOT_CONNECTED = 0, BT_CONNECTED = 1 };
+    enum btconn { BT_NOT_CONNECTED = 0, BT_CONNECTED = 1};
     enum btstate { BT_PAUSE = 0, BT_PLAY = 1 };
 
   private:
@@ -98,12 +98,13 @@ class KCX_BT_Emitter {
     int8_t             m_Cmd = 0;  // question
     int8_t             m_Answ = 0; // answer
     bool               m_f_PSRAMfound = false;
-    bool               m_f_status = BT_NOT_CONNECTED; // connected or not
     bool               m_f_btEmitter_found = false;
     bool               m_f_waitForBtEmitter = false;
     bool               m_f_bt_mode = BT_MODE_EMITTER; // 0: BT_MODE_EMITTER, 1: BT_MODE_RECEIVER
     bool               m_f_bt_state = BT_PLAY;        // 0: BT_PAUSE, 1: BT_PLAY
+    bool               m_f_status = BT_NOT_CONNECTED; // scan, connected or not
     bool               m_f_bt_inUse = false;          // waiting for response
+    bool               m_f_scan = false;
     char*              m_chbuf;
     uint32_t           m_timeStamp = 0;
     uint32_t           m_timeCounter = 0;
@@ -146,6 +147,7 @@ class KCX_BT_Emitter {
     void        cmd_scannedItems();
     void        cmd_statePause();
     void        cmd_statePlay();
+    void        cmd_ScanMode();
     const char* getQueueItem();
     void        addQueueItem(const char* item);
     void        stringifyMemItems();

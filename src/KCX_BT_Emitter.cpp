@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 27.01.2024
+ *  updated on: 29.01.2024
  *      Author: Wolle
  */
 
@@ -80,7 +80,7 @@ void KCX_BT_Emitter::readCmd() {
     while(true) {
         if(t < millis()) {
             timeout();
-            break;
+            return;
         }
         int8_t ch = Serial2.read();
         if(ch == -1) continue;
@@ -154,13 +154,18 @@ void KCX_BT_Emitter::parseATcmds(){
     if(startsWith(m_chbuf, "OK+MAC"))               { cmd_connectedAddr(); m_Answ =  7; ie = 0; goto P2;}
     if(startsWith(m_chbuf, "OK+PAUSE"))             { cmd_statePause();    m_Answ =  8; ie = 0; goto P2;}
     if(startsWith(m_chbuf, "OK+PLAY"))              { cmd_statePlay();     m_Answ =  8; ie = 0; goto P2;}
-    if(startsWith(m_chbuf, "SCAN"))                 {                      m_Answ = -1; ie = 1; goto exit;}
+    if(startsWith(m_chbuf, "SCAN"))                 { cmd_ScanMode();      m_Answ = -1; ie = 0; goto exit;}
     if(startsWith(m_chbuf, "OK+VMLINK"))            {                      m_Answ = -1; ie = 1; goto exit;}
     if(startsWith(m_chbuf, "OK+RESET"))             {                      m_Answ = -1; ie = 1; goto exit;}
+    if(startsWith(m_chbuf, "CON ONE"))              {                      m_Answ = -1; ie = 1; goto exit;}
+    if(startsWith(m_chbuf, "CON LAST"))             {                      m_Answ = -1; ie = 1; goto exit;}
+    if(startsWith(m_chbuf, "CONNECT"))              {                      m_Answ = -1; ie = 1; goto exit;}
 
     if(startsWith(m_chbuf, "Name More than 10"))    { warning("more than 10 names are not allowed");        m_Answ = -90;  ie = 0; goto P2;}
     if(startsWith(m_chbuf, "Addr More than 10"))    { warning("more than 10 MAC Ardesses are not allowed"); m_Answ = -90;  ie = 0; goto P2;}
     if(startsWith(m_chbuf, "Not in emitter mode!")) {                                                       m_Answ =   9;  ie = 0; goto P2;}
+    if(startsWith(m_chbuf, "no connect!"))          {                                                       m_Answ = -90;  ie = 1; goto P2;}
+
     if(startsWith(m_chbuf, "CMD ERR!"))             { cmd_Wrong();                                          m_Answ = -90;  ie = 0; goto P2;}
     if(strlen(m_chbuf) < 4) {                                                                               m_Answ = - 1;  ie = 1; goto exit;}
 
@@ -188,7 +193,7 @@ P2:
     }
 
 exit:
-    if(m_lastMsg && strcmp(m_chbuf, m_lastMsg) != 0){ if(kcx_bt_info && ie) kcx_bt_info(m_chbuf, "");}
+    if(m_lastMsg && strcmp(m_chbuf, m_lastMsg) != 0){ if(kcx_bt_info && ie && strlen(m_chbuf) > 3) kcx_bt_info(m_chbuf, "");}
     if(m_lastMsg){free(m_lastMsg); m_lastMsg = NULL;} // don't repeat messages twice
     m_lastMsg = x_ps_strdup(m_chbuf);
 }
@@ -216,8 +221,15 @@ void KCX_BT_Emitter::handle1sEvent(){
 
     if(m_f_linkChanged){
         m_f_linkChanged = false;
-        if(digitalRead(BT_EMITTER_LINK) == HIGH) m_f_status = BT_CONNECTED;
-        else m_f_status = BT_NOT_CONNECTED;
+        if(digitalRead(BT_EMITTER_LINK) == HIGH){
+            m_f_status = BT_CONNECTED;
+            m_f_scan = false;
+            if(kcx_bt_info) kcx_bt_info("Status ->", "Connected");
+        }
+        else{
+            m_f_status = BT_NOT_CONNECTED;
+            if(kcx_bt_info) kcx_bt_info("Status ->", "Disconnected");
+        }
         if(kcx_bt_status) kcx_bt_status(m_f_status);
         if(m_f_status == BT_CONNECTED && m_f_bt_mode == BT_MODE_RECEIVER) {addQueueItem("AT+NAME?"); addQueueItem("AT+MAC?");return;}
     }
@@ -231,7 +243,7 @@ void KCX_BT_Emitter::bt_Version(){
 
 void KCX_BT_Emitter::timeout(){
     if(!m_f_btEmitter_found) return;
-    if(kcx_bt_info) kcx_bt_info("timeout while reading from KCX_BT_Emitter", "");
+    if(kcx_bt_info && m_f_status) kcx_bt_info("timeout while reading from KCX_BT_Emitter", "");
 }
 
 void KCX_BT_Emitter::stillInUse(const char* cmd){
@@ -256,10 +268,9 @@ void KCX_BT_Emitter::cmd_PowerOn(){
 }
 
 void KCX_BT_Emitter::cmd_Mode() {
-    if(kcx_bt_info) kcx_bt_info("Mode ->", m_chbuf + 6);
-
     if(strcmp(m_chbuf + 6, "EMITTER") == 0) {
         if(!m_f_bt_mode) { // mode has changed
+            if(kcx_bt_info) kcx_bt_info("Mode ->", m_chbuf + 6);
             if(kcx_bt_modeChanged) kcx_bt_modeChanged("TX");
         }
         m_f_bt_mode = true;
@@ -267,6 +278,7 @@ void KCX_BT_Emitter::cmd_Mode() {
     else if(strcmp(m_chbuf + 6, "RECEIVER") == 0) {
         if(m_f_bt_mode) { // mode has changed
             if(kcx_bt_modeChanged) kcx_bt_modeChanged("RX");
+            if(kcx_bt_info) kcx_bt_info("Mode ->", m_chbuf + 6);
         }
         m_f_bt_mode = false;
     }
@@ -347,6 +359,12 @@ void KCX_BT_Emitter::cmd_statePause(){
 void KCX_BT_Emitter::cmd_statePlay(){
     m_f_bt_state = BT_PLAY;
     if(kcx_bt_info) kcx_bt_info("state:", "PAUSE -> PLAY");
+}
+
+void KCX_BT_Emitter::cmd_ScanMode(){
+    if(m_f_scan == true) return;
+    if(kcx_bt_info) kcx_bt_info("Status ->", "Scan...");
+    m_f_scan = true;
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 void KCX_BT_Emitter::addQueueItem(const char* item){
