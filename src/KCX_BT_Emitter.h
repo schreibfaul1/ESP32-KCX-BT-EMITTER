@@ -2,7 +2,7 @@
  * KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 29.01.2024
+ *  updated on: 02.02.2024
  *      Author: Wolle
  */
 
@@ -78,6 +78,7 @@ class KCX_BT_Emitter {
     void        downvolume();
     void        upvolume();
     const char* getMyName();
+    void        cmd_PowerOff();
     void        userCommand(const char* cmd);
     const char* stringifyScannedItems();
 

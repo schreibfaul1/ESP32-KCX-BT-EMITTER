@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 29.01.2024
+ *  updated on: 02.02.2024
  *      Author: Wolle
  */
 
@@ -16,7 +16,7 @@ KCX_BT_Emitter::KCX_BT_Emitter(int8_t RX_pin, int8_t TX_pin, int8_t link_pin, in
     BT_EMITTER_TX   = TX_pin;
     pinMode(BT_EMITTER_LINK, INPUT_PULLUP);
     pinMode(BT_EMITTER_MODE, OUTPUT);
-    digitalWrite(BT_EMITTER_MODE, HIGH);
+    digitalWrite(BT_EMITTER_MODE, LOW);
     m_f_status = digitalRead(BT_EMITTER_LINK);
     m_f_linkChanged = false;
     m_f_waitForBtEmitter = false;
@@ -43,7 +43,7 @@ void KCX_BT_Emitter::begin(){
     else{
         m_chbuf  = (char*) malloc(100);
     }
-
+    digitalWrite(BT_EMITTER_MODE, HIGH);
     Serial2.begin(115200, SERIAL_8N1, BT_EMITTER_TX, BT_EMITTER_RX);
     attachInterrupt(BT_EMITTER_LINK, isr0, CHANGE);
     objPtr = this;
@@ -121,15 +121,17 @@ void KCX_BT_Emitter::writeCommand(const char* cmd){
     m_lastCommand = x_ps_strdup(cmd);
     Serial2.printf("%s%s", m_lastCommand, "\r\n");
 
-    if(startsWith(m_lastCommand, "AT+GMR"))        { m_Cmd = 1; goto exit;}
-    if(startsWith(m_lastCommand, "AT+RESET"))      { m_Cmd = 2; goto exit;}
-    if(startsWith(m_lastCommand, "AT+BT_MODE"))    { m_Cmd = 3; goto exit;}
-    if(startsWith(m_lastCommand, "AT+VOL"))        { m_Cmd = 4; goto exit;}
-    if(startsWith(m_lastCommand, "AT+DELVMLINK"))  { m_Cmd = 5; goto exit;}
-    if(startsWith(m_lastCommand, "AT+NAME"))       { m_Cmd = 6; goto exit;}
-    if(startsWith(m_lastCommand, "AT+MAC"))        { m_Cmd = 7; goto exit;}
-    if(startsWith(m_lastCommand, "AT+PAUSE"))      { m_Cmd = 8; goto exit;}
-    if(startsWith(m_lastCommand, "AT+VMLINK"))     { m_Cmd = 9; goto exit;}
+    if(startsWith(m_lastCommand, "AT+GMR"))        { m_Cmd =  1; goto exit;}
+    if(startsWith(m_lastCommand, "AT+RESET"))      { m_Cmd =  2; goto exit;}
+    if(startsWith(m_lastCommand, "AT+BT_MODE"))    { m_Cmd =  3; goto exit;}
+    if(startsWith(m_lastCommand, "AT+VOL"))        { m_Cmd =  4; goto exit;}
+    if(startsWith(m_lastCommand, "AT+DELVMLINK"))  { m_Cmd =  5; goto exit;}
+    if(startsWith(m_lastCommand, "AT+NAME"))       { m_Cmd =  6; goto exit;}
+    if(startsWith(m_lastCommand, "AT+MAC"))        { m_Cmd =  7; goto exit;}
+    if(startsWith(m_lastCommand, "AT+PAUSE"))      { m_Cmd =  8; goto exit;}
+    if(startsWith(m_lastCommand, "AT+VMLINK"))     { m_Cmd =  9; goto exit;}
+    if(startsWith(m_lastCommand, "AT+POWER_OFF"))  { m_Cmd = 10; goto exit;}
+
 
     log_w("unknown command %s", m_lastCommand);
 exit:
@@ -159,7 +161,9 @@ void KCX_BT_Emitter::parseATcmds(){
     if(startsWith(m_chbuf, "OK+RESET"))             {                      m_Answ = -1; ie = 1; goto exit;}
     if(startsWith(m_chbuf, "CON ONE"))              {                      m_Answ = -1; ie = 1; goto exit;}
     if(startsWith(m_chbuf, "CON LAST"))             {                      m_Answ = -1; ie = 1; goto exit;}
+    if(startsWith(m_chbuf, "CON MATCH ADD"))        {                      m_Answ = -1; ie = 1; goto exit;}
     if(startsWith(m_chbuf, "CONNECT"))              {                      m_Answ = -1; ie = 1; goto exit;}
+    if(startsWith(m_chbuf, "OK+POWEROFF_MODE"))     {                      m_Answ = 10; ie = 1; goto exit;}
 
     if(startsWith(m_chbuf, "Name More than 10"))    { warning("more than 10 names are not allowed");        m_Answ = -90;  ie = 0; goto P2;}
     if(startsWith(m_chbuf, "Addr More than 10"))    { warning("more than 10 MAC Ardesses are not allowed"); m_Answ = -90;  ie = 0; goto P2;}
@@ -265,6 +269,11 @@ void KCX_BT_Emitter::cmd_Wrong(){
 void KCX_BT_Emitter::cmd_PowerOn(){
     if(kcx_bt_info) kcx_bt_info("POWER ON", "");
     addQueueItem("AT+BT_MODE?");
+}
+
+void KCX_BT_Emitter::cmd_PowerOff(){
+    if(kcx_bt_info) kcx_bt_info("POWER OFF", "");
+    addQueueItem("AT+POWER_OFF");
 }
 
 void KCX_BT_Emitter::cmd_Mode() {
