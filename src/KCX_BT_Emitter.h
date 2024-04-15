@@ -69,7 +69,7 @@ class KCX_BT_Emitter {
     void        getVMlinks();                  // get all saved VM links
     void        addLinkName(const char* name); // up to 10 names can be saved
     void        addLinkAddr(const char* addr); // up to 10 MAC addresses can be saved
-    bool        isConnected() { return digitalRead(BT_EMITTER_LINK); }
+    bool        isConnected() {if(!m_f_KCX_BT_Emitter_isActive) return false; else return digitalRead(BT_EMITTER_LINK); }
     uint8_t     getVolume() { return m_bt_volume; }
     void        setVolume(uint8_t vol);
     const char* getMode();
@@ -106,6 +106,7 @@ class KCX_BT_Emitter {
     bool               m_f_status = BT_NOT_CONNECTED; // scan, connected or not
     bool               m_f_bt_inUse = false;          // waiting for response
     bool               m_f_scan = false;
+    bool               m_f_KCX_BT_Emitter_isActive = false;
     char*              m_chbuf;
     uint32_t           m_timeStamp = 0;
     uint32_t           m_timeCounter = 0;
