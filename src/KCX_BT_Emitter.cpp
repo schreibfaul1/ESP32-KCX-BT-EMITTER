@@ -13,8 +13,9 @@ KCX_BT_Emitter::KCX_BT_Emitter(int8_t RX_pin, int8_t TX_pin, int8_t link_pin, in
     BT_EMITTER_MODE = mode_pin;
     BT_EMITTER_LINK = link_pin;
     BT_EMITTER_RX   = RX_pin;
-    BT_EMITTER_RX   = TX_pin;
-    if(BT_EMITTER_MODE < 0 || BT_EMITTER_LINK < 0 || BT_EMITTER_RX < 0 || BT_EMITTER_RX < 0) return;
+    BT_EMITTER_TX   = TX_pin;
+    if(BT_EMITTER_MODE < 0 || BT_EMITTER_LINK < 0 || BT_EMITTER_RX < 0 || BT_EMITTER_TX < 0) return;
+    m_f_KCX_BT_Emitter_isActive = true;
     pinMode(BT_EMITTER_LINK, INPUT_PULLUP);
     pinMode(BT_EMITTER_MODE, OUTPUT);
     digitalWrite(BT_EMITTER_MODE, LOW);
@@ -22,7 +23,6 @@ KCX_BT_Emitter::KCX_BT_Emitter(int8_t RX_pin, int8_t TX_pin, int8_t link_pin, in
     m_f_linkChanged = false;
     m_f_waitForBtEmitter = false;
     m_myName = x_ps_strdup("Only in receive mode");
-    m_f_KCX_BT_Emitter_isActive = true;
 }
 
 KCX_BT_Emitter::~KCX_BT_Emitter(){
