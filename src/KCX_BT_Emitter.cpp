@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 02.02.2024
+ *  updated on: 08.10.2024
  *      Author: Wolle
  */
 
@@ -32,19 +32,21 @@ KCX_BT_Emitter::~KCX_BT_Emitter(){
     if(m_lastCommand){free(m_lastCommand); m_lastCommand = NULL;}
     if(m_jsonMemItemsStr){free(m_jsonMemItemsStr); m_jsonMemItemsStr = NULL;}
     if(m_myName) {free(m_myName); m_myName = NULL;}
+    if(m_chbuf) {free(m_chbuf); m_chbuf = NULL;}
     vector_clear_and_shrink(m_bt_addr);
     vector_clear_and_shrink(m_bt_names);
     vector_clear_and_shrink(m_messageQueue);
+    tck1s.detach();
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 void KCX_BT_Emitter::begin(){
     if(!m_f_KCX_BT_Emitter_isActive) return;
     if(psramInit()) m_f_PSRAMfound = true;
     if(m_f_PSRAMfound){
-        m_chbuf  = (char*) ps_malloc(100);
+        m_chbuf  = (char*) ps_malloc(m_chbufSize);
     }
     else{
-        m_chbuf  = (char*) malloc(100);
+        m_chbuf  = (char*) malloc(m_chbufSize);
     }
     digitalWrite(BT_EMITTER_MODE, HIGH);
     Serial2.begin(115200, SERIAL_8N1, BT_EMITTER_TX, BT_EMITTER_RX);
@@ -82,13 +84,14 @@ void KCX_BT_Emitter::readCmd() {
     if(!m_f_KCX_BT_Emitter_isActive) return;
     uint32_t t = millis() + 500;
     uint8_t  idx = 0;
-    while(true) {
+    memset(m_chbuf, 0, m_chbufSize);
+    while(Serial2.available()) {
         if(t < millis()) {
             timeout();
             return;
         }
         int8_t ch = Serial2.read();
-        if(ch == -1) continue;
+   //     if(ch == -1) continue;
         if(ch == '\n') {
             // log_i("%s", m_chbuf);
             break;
@@ -217,9 +220,11 @@ void KCX_BT_Emitter::handle1sEvent(){
         if(m_timeStamp + 2000 < millis()){
             m_f_waitForBtEmitter = false;
             if(kcx_bt_info) kcx_bt_info("KCX_BT_Emitter not found", "");
+            Serial2.end();
         }
     }
     if(!m_f_btEmitter_found){
+        if(m_f_waitForBtEmitter == false) return;
         addQueueItem("AT+"); // another try
         return;
     }

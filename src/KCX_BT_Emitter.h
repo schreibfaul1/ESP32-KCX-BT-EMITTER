@@ -88,6 +88,7 @@ class KCX_BT_Emitter {
 
   private:
     Ticker             tck1s;
+    const uint8_t      m_chbufSize = 100;
     std::vector<char*> m_bt_names;
     std::vector<char*> m_bt_addr;
     std::vector<char*> m_bt_scannedItems;
