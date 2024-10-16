@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 08.10.2024
+ *  updated on: 16.10.2024
  *      Author: Wolle
  */
 
@@ -84,13 +84,14 @@ void KCX_BT_Emitter::readCmd() {
     if(!m_f_KCX_BT_Emitter_isActive) return;
     uint32_t t = millis() + 500;
     uint8_t  idx = 0;
+    int8_t ch = 0;
     memset(m_chbuf, 0, m_chbufSize);
     while(Serial2.available()) {
         if(t < millis()) {
             timeout();
             return;
         }
-        int8_t ch = Serial2.read();
+        ch = Serial2.read();
    //     if(ch == -1) continue;
         if(ch == '\n') {
             // log_i("%s", m_chbuf);
@@ -98,10 +99,10 @@ void KCX_BT_Emitter::readCmd() {
         }
         if(idx == 63) return;
         if(!isascii(ch)) { continue; }
+        if(ch == 0) return;
         m_chbuf[idx] = ch;
         idx++;
     }
-    m_chbuf[idx] = '\0';
     if(!idx) return; // nothing to parse
 
     if(!m_f_btEmitter_found) { detectOKcmd(); }
