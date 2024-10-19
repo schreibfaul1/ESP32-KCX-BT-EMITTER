@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 16.10.2024
+ *  updated on: 19.10.2024
  *      Author: Wolle
  */
 
@@ -84,22 +84,21 @@ void KCX_BT_Emitter::readCmd() {
     if(!m_f_KCX_BT_Emitter_isActive) return;
     uint32_t t = millis() + 500;
     uint8_t  idx = 0;
-    int8_t ch = 0;
+    int16_t ch = 0;
     memset(m_chbuf, 0, m_chbufSize);
-    while(Serial2.available()) {
+    while(true) {
         if(t < millis()) {
             timeout();
             return;
         }
         ch = Serial2.read();
-   //     if(ch == -1) continue;
+        vTaskDelay(1);
         if(ch == '\n') {
-            // log_i("%s", m_chbuf);
+        //    log_w("%s", m_chbuf);
             break;
         }
-        if(idx == 63) return;
-        if(!isascii(ch)) { continue; }
-        if(ch == 0) return;
+        if(ch >127) { continue; }
+        if(ch < 32) { continue; }
         m_chbuf[idx] = ch;
         idx++;
     }
@@ -144,7 +143,7 @@ void KCX_BT_Emitter::writeCommand(const char* cmd){
     if(startsWith(m_lastCommand, "AT+POWER_OFF"))  { m_Cmd = 10; goto exit;}
 
 
-    log_w("unknown command %s", m_lastCommand);
+    // log_w("unknown command %s", m_lastCommand);
 exit:
     return;
 }
