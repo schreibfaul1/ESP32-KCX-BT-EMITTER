@@ -49,10 +49,12 @@ void KCX_BT_Emitter::begin(){
         m_chbuf  = (char*) malloc(m_chbufSize);
     }
     digitalWrite(BT_EMITTER_MODE, HIGH);
+    pinMode(BT_EMITTER_RX, INPUT_PULLUP);
     Serial2.begin(115200, SERIAL_8N1, BT_EMITTER_TX, BT_EMITTER_RX);
     attachInterrupt(BT_EMITTER_LINK, isr0, CHANGE);
     objPtr = this;
     tckPtr = this;
+
     writeCommand("AT+");
     m_timeStamp = millis();
     tck1s.attach(1, t1s);
@@ -97,6 +99,7 @@ void KCX_BT_Emitter::readCmd() {
         //    log_w("%s", m_chbuf);
             break;
         }
+        // log_w("%c", ch);
         if(ch >127) { continue; }
         if(ch < 32) { continue; }
         m_chbuf[idx] = ch;
