@@ -81,6 +81,7 @@ class KCX_BT_Emitter {
     void        cmd_PowerOff();
     void        userCommand(const char* cmd);
     const char* stringifyScannedItems();
+    const char* list_protokol(uint16_t elementNr);
 
     enum btmode { BT_MODE_RECEIVER = 0, BT_MODE_EMITTER = 1 };
     enum btconn { BT_NOT_CONNECTED = 0, BT_CONNECTED = 1};
@@ -93,6 +94,7 @@ class KCX_BT_Emitter {
     std::vector<char*> m_bt_addr;
     std::vector<char*> m_bt_scannedItems;
     std::vector<char*> m_messageQueue;
+    std::vector<char*> m_RX_TX_protocol;
     int8_t             BT_EMITTER_LINK = -1;
     int8_t             BT_EMITTER_MODE = -1;
     int8_t             BT_EMITTER_RX = -1;
@@ -154,6 +156,7 @@ class KCX_BT_Emitter {
     const char* getQueueItem();
     void        addQueueItem(const char* item);
     void        stringifyMemItems();
+    void        protocol_addElement(const char* RX_TX, const char* str);
 
     bool startsWith(const char* base, const char* searchString) {
         char c;
@@ -188,6 +191,13 @@ class KCX_BT_Emitter {
         if(m_f_PSRAMfound) { ps_str = (char*)ps_malloc(strlen(str) + 1); }
         else { ps_str = (char*)malloc(strlen(str) + 1); }
         strcpy(ps_str, str);
+        return ps_str;
+    }
+
+    char* x_ps_calloc(uint16_t len, uint8_t size) {
+        char* ps_str = NULL;
+        if(psramFound()){ps_str = (char*) ps_calloc(len, size);}
+        else             {ps_str = (char*)    calloc(len, size);}
         return ps_str;
     }
 };

@@ -36,6 +36,8 @@ KCX_BT_Emitter::~KCX_BT_Emitter(){
     vector_clear_and_shrink(m_bt_addr);
     vector_clear_and_shrink(m_bt_names);
     vector_clear_and_shrink(m_messageQueue);
+    vector_clear_and_shrink(m_RX_TX_protocol);
+
     tck1s.detach();
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -49,12 +51,13 @@ void KCX_BT_Emitter::begin(){
         m_chbuf  = (char*) malloc(m_chbufSize);
     }
     digitalWrite(BT_EMITTER_MODE, HIGH);
-    pinMode(BT_EMITTER_RX, INPUT_PULLUP);
     Serial2.begin(115200, SERIAL_8N1, BT_EMITTER_TX, BT_EMITTER_RX);
     attachInterrupt(BT_EMITTER_LINK, isr0, CHANGE);
     objPtr = this;
     tckPtr = this;
 
+    vTaskDelay(100);
+    while(Serial2.available()){Serial2.read();} // empty readbuffer
     writeCommand("AT+");
     m_timeStamp = millis();
     tck1s.attach(1, t1s);
@@ -99,14 +102,13 @@ void KCX_BT_Emitter::readCmd() {
         //    log_w("%s", m_chbuf);
             break;
         }
-        // log_w("%c", ch);
         if(ch >127) { continue; }
         if(ch < 32) { continue; }
         m_chbuf[idx] = ch;
         idx++;
     }
     if(!idx) return; // nothing to parse
-
+    protocol_addElement("RX", m_chbuf);
     if(!m_f_btEmitter_found) { detectOKcmd(); }
     else                     { parseATcmds(); }
 }
@@ -123,8 +125,9 @@ void KCX_BT_Emitter::detectOKcmd(){
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 void KCX_BT_Emitter::writeCommand(const char* cmd){
     if(!m_f_KCX_BT_Emitter_isActive) return;
+    protocol_addElement("TX", cmd);
     if(!m_f_btEmitter_found){
-        if(strcmp(cmd, "AT+") == 0) Serial2.printf("%s%s", cmd, "\r\n");
+            if(strcmp(cmd, "AT+") == 0) Serial2.printf("%s%s", cmd, "\r\n");
         return;
     }
 //  if(kcx_bt_info) kcx_bt_info("new command", cmd);
@@ -555,6 +558,20 @@ const char* KCX_BT_Emitter::stringifyScannedItems(){ // returns the last three s
     m_jsonScanItemsStr[JSONstrLength - 2] = ']';  // replace comma by square bracket close
     m_jsonScanItemsStr[JSONstrLength - 1] = '\0'; // and terminate
     return m_jsonScanItemsStr;
+}
+
+void KCX_BT_Emitter::protocol_addElement(const char* RX_TX, const char* str){
+    if(!str)return;
+    char* buf = (char*) x_ps_calloc(strlen(str) + 5, 1);
+    sprintf(buf, "%s: %s", RX_TX, str);
+    m_RX_TX_protocol.push_back(x_ps_strdup(buf));
+    if(m_RX_TX_protocol.size() > 100){ free(m_RX_TX_protocol[0]); m_RX_TX_protocol.erase(m_RX_TX_protocol.begin());} // remove the last element
+    if(buf) free(buf);
+}
+
+const char* KCX_BT_Emitter::list_protokol(uint16_t elementNr){
+    if(elementNr >= m_RX_TX_protocol.size()) return NULL;
+    return m_RX_TX_protocol[elementNr];
 }
 
 //-------------------------interrupt handling --------------------------------------------------------------------------------------------------------
