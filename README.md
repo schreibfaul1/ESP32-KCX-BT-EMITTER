@@ -65,3 +65,13 @@ void kcx_bt_modeChanged(const char* m){ // Every time the mode has changed
 
 
 ````
+
+Serial port protocol:
+The last 100 read/write commands are stored
+````c++
+    uint16_t i = 0;
+    while(bt_emitter.list_protokol(i)){
+        log_i("%s", bt_emitter.list_protokol(i));
+        i++;
+    }
+````
