@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 19.10.2024
+ *  updated on: 29.10.2024
  *      Author: Wolle
  */
 
@@ -22,7 +22,7 @@ KCX_BT_Emitter::KCX_BT_Emitter(int8_t RX_pin, int8_t TX_pin, int8_t link_pin, in
     m_f_status = digitalRead(BT_EMITTER_LINK);
     m_f_linkChanged = false;
     m_f_waitForBtEmitter = false;
-    m_myName = x_ps_strdup("Only in receive mode");
+    m_myName = strdup("Only in receive mode");
 }
 
 KCX_BT_Emitter::~KCX_BT_Emitter(){
