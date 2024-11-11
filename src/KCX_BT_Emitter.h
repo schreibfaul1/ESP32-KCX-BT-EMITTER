@@ -2,7 +2,7 @@
  * KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 02.02.2024
+ *  updated on: 11.11.2024
  *      Author: Wolle
  */
 
@@ -73,6 +73,7 @@ class KCX_BT_Emitter {
     uint8_t     getVolume() { return m_bt_volume; }
     void        setVolume(uint8_t vol);
     const char* getMode();
+    void        setMode(const char* mode);
     void        changeMode();
     void        pauseResume();
     void        downvolume();

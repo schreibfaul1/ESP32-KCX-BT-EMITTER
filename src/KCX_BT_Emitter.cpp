@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 29.10.2024
+ *  updated on: 11.11.2024
  *      Author: Wolle
  */
 
@@ -50,7 +50,7 @@ void KCX_BT_Emitter::begin(){
     else{
         m_chbuf  = (char*) malloc(m_chbufSize);
     }
-    digitalWrite(BT_EMITTER_MODE, HIGH);
+//    digitalWrite(BT_EMITTER_MODE, HIGH);
     Serial2.begin(115200, SERIAL_8N1, BT_EMITTER_TX, BT_EMITTER_RX);
     attachInterrupt(BT_EMITTER_LINK, isr0, CHANGE);
     objPtr = this;
@@ -448,6 +448,12 @@ void KCX_BT_Emitter::changeMode(){
     if(!m_f_KCX_BT_Emitter_isActive) return;
     digitalWrite(BT_EMITTER_MODE, !m_f_bt_mode);
     addQueueItem("AT+RESET");
+}
+
+void KCX_BT_Emitter::setMode(const char* mode){
+log_e("%s", mode);
+    if(!strcmp(mode, "RX")) {digitalWrite(BT_EMITTER_MODE, LOW);  addQueueItem("AT+RESET");}
+    if(!strcmp(mode, "TX")) {digitalWrite(BT_EMITTER_MODE, HIGH); addQueueItem("AT+RESET");}
 }
 
 void KCX_BT_Emitter::pauseResume(){
