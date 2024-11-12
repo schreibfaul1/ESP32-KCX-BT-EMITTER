@@ -451,7 +451,6 @@ void KCX_BT_Emitter::changeMode(){
 }
 
 void KCX_BT_Emitter::setMode(const char* mode){
-log_e("%s", mode);
     if(!strcmp(mode, "RX")) {digitalWrite(BT_EMITTER_MODE, LOW);  addQueueItem("AT+RESET");}
     if(!strcmp(mode, "TX")) {digitalWrite(BT_EMITTER_MODE, HIGH); addQueueItem("AT+RESET");}
 }
