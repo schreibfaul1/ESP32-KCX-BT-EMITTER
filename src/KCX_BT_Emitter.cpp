@@ -299,18 +299,18 @@ void KCX_BT_Emitter::cmd_PowerOff(){
 
 void KCX_BT_Emitter::cmd_Mode() {
     if(strcmp(m_chbuf + 6, "EMITTER") == 0) {
-        if(!m_f_bt_mode) { // mode has changed
+        if(m_f_bt_mode == BT_MODE_RECEIVER) { // mode has changed
             if(kcx_bt_info) kcx_bt_info("Mode ->", m_chbuf + 6);
             if(kcx_bt_modeChanged) kcx_bt_modeChanged("TX");
         }
-        m_f_bt_mode = true;
+        m_f_bt_mode = BT_MODE_EMITTER;
     }
     else if(strcmp(m_chbuf + 6, "RECEIVER") == 0) {
-        if(m_f_bt_mode) { // mode has changed
+        if(m_f_bt_mode == BT_MODE_EMITTER) { // mode has changed
             if(kcx_bt_modeChanged) kcx_bt_modeChanged("RX");
             if(kcx_bt_info) kcx_bt_info("Mode ->", m_chbuf + 6);
         }
-        m_f_bt_mode = false;
+        m_f_bt_mode = BT_MODE_RECEIVER;
     }
     else {
         log_e("unknown BT answer  %s", m_chbuf);
@@ -452,8 +452,8 @@ void KCX_BT_Emitter::changeMode(){
 
 void KCX_BT_Emitter::setMode(const char* mode){
     if(!m_f_KCX_BT_Emitter_isActive) return;
-    if(!strcmp(mode, "RX")) {digitalWrite(BT_EMITTER_MODE, LOW);  addQueueItem("AT+RESET");}
-    if(!strcmp(mode, "TX")) {digitalWrite(BT_EMITTER_MODE, HIGH); addQueueItem("AT+RESET");}
+    if(!strcmp(mode, "RX")) {digitalWrite(BT_EMITTER_MODE, LOW);  addQueueItem("AT+RESET"); m_f_bt_mode = BT_MODE_RECEIVER;}
+    if(!strcmp(mode, "TX")) {digitalWrite(BT_EMITTER_MODE, HIGH); addQueueItem("AT+RESET"); m_f_bt_mode = BT_MODE_EMITTER;}
 }
 
 void KCX_BT_Emitter::pauseResume(){
