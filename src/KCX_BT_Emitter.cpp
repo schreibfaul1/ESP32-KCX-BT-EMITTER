@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 11.11.2024
+ *  updated on: 27.12.2024
  *      Author: Wolle
  */
 
@@ -451,6 +451,7 @@ void KCX_BT_Emitter::changeMode(){
 }
 
 void KCX_BT_Emitter::setMode(const char* mode){
+    if(!m_f_KCX_BT_Emitter_isActive) return;
     if(!strcmp(mode, "RX")) {digitalWrite(BT_EMITTER_MODE, LOW);  addQueueItem("AT+RESET");}
     if(!strcmp(mode, "TX")) {digitalWrite(BT_EMITTER_MODE, HIGH); addQueueItem("AT+RESET");}
 }
