@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 27.12.2024
+ *  updated on: 11.04.2025
  *      Author: Wolle
  */
 
@@ -568,7 +568,7 @@ const char* KCX_BT_Emitter::stringifyScannedItems(){ // returns the last three s
 
 void KCX_BT_Emitter::protocol_addElement(const char* RX_TX, const char* str){
     if(!str)return;
-    char* buf = (char*) x_ps_calloc(strlen(str) + 5, 1);
+    char* buf = (char*) x_ps_calloc(strlen(str) + strlen(RX_TX) + 5, 1);
     sprintf(buf, "%s: %s", RX_TX, str);
     m_RX_TX_protocol.push_back(x_ps_strdup(buf));
     if(m_RX_TX_protocol.size() > 100){ free(m_RX_TX_protocol[0]); m_RX_TX_protocol.erase(m_RX_TX_protocol.begin());} // remove the last element
