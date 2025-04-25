@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 11.04.2025
+ *  updated on: 25.04.2025
  *      Author: Wolle
  */
 
@@ -15,7 +15,7 @@ KCX_BT_Emitter::KCX_BT_Emitter(int8_t RX_pin, int8_t TX_pin, int8_t link_pin, in
     BT_EMITTER_RX   = RX_pin;
     BT_EMITTER_TX   = TX_pin;
     if(BT_EMITTER_MODE < 0 || BT_EMITTER_LINK < 0 || BT_EMITTER_RX < 0 || BT_EMITTER_TX < 0) return;
-    m_f_KCX_BT_Emitter_isActive = true;
+    m_f_KCX_BT_Emitter_isInit = true;
     pinMode(BT_EMITTER_LINK, INPUT_PULLUP);
     pinMode(BT_EMITTER_MODE, OUTPUT);
     digitalWrite(BT_EMITTER_MODE, LOW);
@@ -42,7 +42,7 @@ KCX_BT_Emitter::~KCX_BT_Emitter(){
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 void KCX_BT_Emitter::begin(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     if(psramInit()) m_f_PSRAMfound = true;
     if(m_f_PSRAMfound){
         m_chbuf  = (char*) ps_malloc(m_chbufSize);
@@ -68,7 +68,7 @@ void KCX_BT_Emitter::begin(){
 }
 
 void KCX_BT_Emitter::loop(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     if(m_f_ticker1s){
         m_f_ticker1s = false;
         handle1sEvent();
@@ -86,7 +86,7 @@ void KCX_BT_Emitter::loop(){
 }
 
 void KCX_BT_Emitter::readCmd() {
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     uint32_t t = millis() + 500;
     uint8_t  idx = 0;
     int16_t ch = 0;
@@ -114,7 +114,7 @@ void KCX_BT_Emitter::readCmd() {
 }
 
 void KCX_BT_Emitter::detectOKcmd(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     if(strcmp(m_chbuf, "OK+") == 0){
         m_f_btEmitter_found = true;
         if(kcx_bt_info) kcx_bt_info("KCX_BT_Emitter found", "");
@@ -124,10 +124,10 @@ void KCX_BT_Emitter::detectOKcmd(){
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 void KCX_BT_Emitter::writeCommand(const char* cmd){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     protocol_addElement("TX", cmd);
     if(!m_f_btEmitter_found){
-            if(strcmp(cmd, "AT+") == 0) Serial2.printf("%s%s", cmd, "\r\n");
+        if(strcmp(cmd, "AT+") == 0) Serial2.printf("%s%s", cmd, "\r\n");
         return;
     }
 //  if(kcx_bt_info) kcx_bt_info("new command", cmd);
@@ -136,7 +136,6 @@ void KCX_BT_Emitter::writeCommand(const char* cmd){
     if(m_lastCommand){free(m_lastCommand); m_lastCommand = NULL;}
     m_lastCommand = x_ps_strdup(cmd);
     Serial2.printf("%s%s", m_lastCommand, "\r\n");
-
     if(startsWith(m_lastCommand, "AT+GMR"))        { m_Cmd =  1; goto exit;}
     if(startsWith(m_lastCommand, "AT+RESET"))      { m_Cmd =  2; goto exit;}
     if(startsWith(m_lastCommand, "AT+BT_MODE"))    { m_Cmd =  3; goto exit;}
@@ -155,7 +154,7 @@ exit:
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 void KCX_BT_Emitter::parseATcmds(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
 //  log_i("%s", m_chbuf);
     bool ie = 0; // if true throw info event message
     if(startsWith(m_chbuf, "OK+VERS:"))             { bt_Version();        m_Answ =  1; ie = 0; goto P2;}
@@ -220,7 +219,7 @@ exit:
 }
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 void KCX_BT_Emitter::handle1sEvent(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     m_timeCounter++;  // counts the seconds since KCX_BT_EMITTER found
     if(!m_f_btEmitter_found && m_f_waitForBtEmitter){
         if(m_timeStamp + 2000 < millis()){
@@ -292,7 +291,7 @@ void KCX_BT_Emitter::cmd_PowerOn(){
 }
 
 void KCX_BT_Emitter::cmd_PowerOff(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     if(kcx_bt_info) kcx_bt_info("POWER OFF", "");
     addQueueItem("AT+POWER_OFF");
 }
@@ -415,25 +414,25 @@ const char* KCX_BT_Emitter::getQueueItem(){
 
 // -------------------------- user commands ----------------------------------------------------------------------------------------------------------
 void KCX_BT_Emitter::deleteVMlinks(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     addQueueItem("AT+DELVMLINK");
 }
 void KCX_BT_Emitter::getVMlinks(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     addQueueItem("AT+VMLINK?");
 }
 void KCX_BT_Emitter::addLinkName(const char* name){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     sprintf(m_chbuf, "AT+ADDLINKNAME=%s", name);
     addQueueItem(m_chbuf);
 }
 void KCX_BT_Emitter::addLinkAddr(const char* addr){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     sprintf(m_chbuf, "AT+ADDLINKADD=%s", addr);
     addQueueItem(m_chbuf);
 }
 void KCX_BT_Emitter::setVolume(uint8_t vol){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     if(vol > 31){ vol = 31;}
     sprintf(m_chbuf, "AT+VOL=%d", vol);
     addQueueItem(m_chbuf);
@@ -445,24 +444,24 @@ const char* KCX_BT_Emitter::getMode(){ // returns RX or TX
 }
 
 void KCX_BT_Emitter::changeMode(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     digitalWrite(BT_EMITTER_MODE, !m_f_bt_mode);
     addQueueItem("AT+RESET");
 }
 
 void KCX_BT_Emitter::setMode(const char* mode){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     if(!strcmp(mode, "RX")) {digitalWrite(BT_EMITTER_MODE, LOW);  addQueueItem("AT+RESET"); m_f_bt_mode = BT_MODE_RECEIVER;}
     if(!strcmp(mode, "TX")) {digitalWrite(BT_EMITTER_MODE, HIGH); addQueueItem("AT+RESET"); m_f_bt_mode = BT_MODE_EMITTER;}
 }
 
 void KCX_BT_Emitter::pauseResume(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     addQueueItem("AT+PAUSE");
 }
 
 void KCX_BT_Emitter::downvolume(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     int v = m_bt_volume;
     v--;
     if(v < 0){
@@ -474,7 +473,7 @@ void KCX_BT_Emitter::downvolume(){
 }
 
 void KCX_BT_Emitter::upvolume(){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     int v = m_bt_volume;
     v++;
     if(v > 31){
@@ -486,12 +485,12 @@ void KCX_BT_Emitter::upvolume(){
 }
 
 const char* KCX_BT_Emitter::getMyName(){
-    if(!m_f_KCX_BT_Emitter_isActive) return "";
+    if(!m_f_KCX_BT_Emitter_isInit) return "";
     return m_myName;
 }
 
 void KCX_BT_Emitter::userCommand(const char* cmd){
-    if(!m_f_KCX_BT_Emitter_isActive) return;
+    if(!m_f_KCX_BT_Emitter_isInit) return;
     addQueueItem(cmd);
 }
 // -------------------------- JSON relevant ----------------------------------------------------------------------------------------------------------
@@ -534,7 +533,7 @@ void KCX_BT_Emitter::stringifyMemItems() {
 }
 
 const char* KCX_BT_Emitter::stringifyScannedItems(){ // returns the last three scanned BT devices as jsonStr
-    if(!m_f_KCX_BT_Emitter_isActive) return "";
+    if(!m_f_KCX_BT_Emitter_isInit) return "";
     uint16_t JSONstrLength = 0;
     if(m_jsonScanItemsStr){free(m_jsonScanItemsStr); m_jsonScanItemsStr = NULL;}
     JSONstrLength += 2;
