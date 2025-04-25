@@ -44,12 +44,8 @@ KCX_BT_Emitter::~KCX_BT_Emitter(){
 void KCX_BT_Emitter::begin(){
     if(!m_f_KCX_BT_Emitter_isInit) return;
     if(psramInit()) m_f_PSRAMfound = true;
-    if(m_f_PSRAMfound){
-        m_chbuf  = (char*) ps_malloc(m_chbufSize);
-    }
-    else{
-        m_chbuf  = (char*) malloc(m_chbufSize);
-    }
+    if(m_f_PSRAMfound){ m_chbuf  = (char*) ps_malloc(m_chbufSize);}
+    else{               m_chbuf  = (char*) malloc(m_chbufSize);}
 //    digitalWrite(BT_EMITTER_MODE, HIGH);
     Serial2.begin(115200, SERIAL_8N1, BT_EMITTER_TX, BT_EMITTER_RX);
     attachInterrupt(BT_EMITTER_LINK, isr0, CHANGE);
@@ -58,7 +54,7 @@ void KCX_BT_Emitter::begin(){
 
     vTaskDelay(100);
     while(Serial2.available()){Serial2.read();} // empty readbuffer
-    writeCommand("AT+");
+    userCommand("AT+");
     m_timeStamp = millis();
     tck1s.attach(1, t1s);
     m_f_waitForBtEmitter = true;
@@ -126,8 +122,10 @@ void KCX_BT_Emitter::detectOKcmd(){
 void KCX_BT_Emitter::writeCommand(const char* cmd){
     if(!m_f_KCX_BT_Emitter_isInit) return;
     protocol_addElement("TX", cmd);
-    if(!m_f_btEmitter_found){
-        if(strcmp(cmd, "AT+") == 0) Serial2.printf("%s%s", cmd, "\r\n");
+
+    if(strcmp(cmd, "AT+") == 0){
+        Serial2.printf("%s%s", cmd, "\r\n");
+        m_f_bt_inUse = true;
         return;
     }
 //  if(kcx_bt_info) kcx_bt_info("new command", cmd);
