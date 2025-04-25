@@ -7,7 +7,7 @@
 example:
 ````c++
 #include "Arduino.h"
-#include "src/KCX_BT_Emitter.h"
+#include "KCX_BT_Emitter.h"
 
 #define BT_EMITTER_RX    45  // TX pin - KCX Bluetooth Transmitter
 #define BT_EMITTER_TX    38  // RX pin - KCX Bluetooth Transmitter
@@ -18,27 +18,39 @@ example:
 KCX_BT_Emitter  bt_emitter(BT_EMITTER_RX, BT_EMITTER_TX, BT_EMITTER_LINK, BT_EMITTER_MODE);
 
 char buff[100];
+bool f_bt_emitter = false;
 
 void setup() {
-  Serial.begin(115200);
-  bt_emitter.begin();
-  bt_emitter.userCommand("AT+GMR?");      // get version
-  bt_emitter.userCommand("AT+VMLINK?");   // get all mem vmlinks
-  bt_emitter.userCommand("AT+VOL?");      // get volume (in receiver mode 0 ... 31)
-  bt_emitter.userCommand("AT+BT_MODE?");  // transmitter or receiver
+    Serial.begin(115200);
+    bt_emitter.begin();
 }
 
-void loop() {
-  bt_emitter.loop();
-  if(Serial.available()){
-    int p = Serial.readBytesUntil('\n', buff, 100);
-    buff[p] = '\0';
-    bt_emitter.userCommand(buff);
-  }
+void loop(){
+    bt_emitter.loop();
+    vTaskDelay(1);
+    if (Serial.available()){
+        String r = Serial.readStringUntil('\n');
+        Serial.printf("Serial: %s\n", r.c_str());
+        if (r.startsWith("btp")){
+            uint16_t i = 0;
+            while (bt_emitter.list_protokol(i)){
+                log_e("%s", bt_emitter.list_protokol(i));
+                i++;
+            }
+        }
+    }
+    if (f_bt_emitter){
+        bt_emitter.userCommand("AT+GMR?");      // get version
+        bt_emitter.userCommand("AT+VMLINK?");   // get all mem vmlinks
+        bt_emitter.userCommand("AT+VOL?");      // get volume (in receiver mode 0 ... 31)
+        bt_emitter.userCommand("AT+BT_MODE?");  // transmitter or receiver
+        f_bt_emitter = false;
+    }
 }
 
 void kcx_bt_info(const char* info, const char* val){
     Serial.printf("BT-Emitter: %s %s\n", info, val);
+    if(!strcmp(info, "KCX_BT_Emitter found"))f_bt_emitter = true;
 }
 
 void kcx_bt_status(bool status) { // is always called when the status changes fron disconnected to connected and vice versa
@@ -62,6 +74,7 @@ void kcx_bt_modeChanged(const char* m){ // Every time the mode has changed
       Serial.printf("emitter mode");
     }
 }
+
 
 
 ````
