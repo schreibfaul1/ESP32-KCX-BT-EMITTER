@@ -23,6 +23,10 @@ bool f_bt_emitter = false;
 void setup() {
     Serial.begin(115200);
     bt_emitter.begin();
+    bt_emitter.userCommand("AT+GMR?");      // get version
+    bt_emitter.userCommand("AT+VMLINK?");   // get all mem vmlinks
+    bt_emitter.userCommand("AT+VOL?");      // get volume (in receiver mode 0 ... 31)
+    bt_emitter.userCommand("AT+BT_MODE?");  // transmitter or receiver
 }
 
 void loop(){
@@ -38,13 +42,6 @@ void loop(){
                 i++;
             }
         }
-    }
-    if (f_bt_emitter){
-        bt_emitter.userCommand("AT+GMR?");      // get version
-        bt_emitter.userCommand("AT+VMLINK?");   // get all mem vmlinks
-        bt_emitter.userCommand("AT+VOL?");      // get volume (in receiver mode 0 ... 31)
-        bt_emitter.userCommand("AT+BT_MODE?");  // transmitter or receiver
-        f_bt_emitter = false;
     }
 }
 
@@ -74,6 +71,7 @@ void kcx_bt_modeChanged(const char* m){ // Every time the mode has changed
       Serial.printf("emitter mode");
     }
 }
+
 
 
 
