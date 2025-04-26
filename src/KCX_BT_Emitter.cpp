@@ -2,7 +2,7 @@
  *  KCX_BT_Emitter.cpp
  *
  *  Created on: 21.01.2024
- *  updated on: 25.04.2025
+ *  updated on: 26.04.2025
  *      Author: Wolle
  */
 
@@ -23,6 +23,8 @@ KCX_BT_Emitter::KCX_BT_Emitter(int8_t RX_pin, int8_t TX_pin, int8_t link_pin, in
     m_f_linkChanged = false;
     m_f_waitForBtEmitter = false;
     m_myName = strdup("Only in receive mode");
+    m_f_bt_inUse = false;
+    m_lastCommand = strdup("");
 }
 
 KCX_BT_Emitter::~KCX_BT_Emitter(){
@@ -61,23 +63,26 @@ void KCX_BT_Emitter::begin(){
     m_f_btEmitter_found = false;
     m_bt_add_num = 0;
     m_bt_name_num = 0;
+    m_f_bt_inUse = false;
 }
 
 void KCX_BT_Emitter::loop(){
     if(!m_f_KCX_BT_Emitter_isInit) return;
-    if(m_f_ticker1s){
-        m_f_ticker1s = false;
-        handle1sEvent();
-        return;
+
+    if(!m_f_bt_inUse){
+        if(m_messageQueue.size()){
+            const char* msg = getQueueItem();
+            writeCommand(msg);
+            m_f_bt_inUse = true;
+            m_timeStamp = millis();
+        }
     }
     if(Serial2.available()){
         readCmd();
-        return;
     }
-    if(!m_f_bt_inUse){
-        if(!m_messageQueue.size()) return;
-        const char* msg = getQueueItem();
-        writeCommand(msg);
+    if(m_f_ticker1s){
+        m_f_ticker1s = false;
+        handle1sEvent();
     }
 }
 
@@ -121,16 +126,17 @@ void KCX_BT_Emitter::detectOKcmd(){
 //----------------------------------------------------------------------------------------------------------------------------------------------------
 void KCX_BT_Emitter::writeCommand(const char* cmd){
     if(!m_f_KCX_BT_Emitter_isInit) return;
+    if(!cmd) return;  // guard
     protocol_addElement("TX", cmd);
 
     if(strcmp(cmd, "AT+") == 0){
         Serial2.printf("%s%s", cmd, "\r\n");
-        m_f_bt_inUse = true;
+//        m_f_bt_inUse = true;
         return;
     }
 //  if(kcx_bt_info) kcx_bt_info("new command", cmd);
     if(m_f_bt_inUse) {stillInUse(cmd); return;}
-    m_f_bt_inUse = true;
+//    m_f_bt_inUse = true;
     if(m_lastCommand){free(m_lastCommand); m_lastCommand = NULL;}
     m_lastCommand = x_ps_strdup(cmd);
     Serial2.printf("%s%s", m_lastCommand, "\r\n");
@@ -226,10 +232,10 @@ void KCX_BT_Emitter::handle1sEvent(){
             Serial2.end();
         }
     }
-    if(!m_f_btEmitter_found){
-        if(m_f_waitForBtEmitter == false) return;
-        addQueueItem("AT+"); // another try
-        return;
+    if(m_timeCounter > 60){
+        //userCommand("AT+"); // alive check
+        // if(kcx_bt_info) kcx_bt_info("KCX_BT_Emitter alive check", "");
+        m_timeCounter = 0;
     }
     static uint32_t busyCounter = 0;
     if(m_f_bt_inUse) busyCounter++;
