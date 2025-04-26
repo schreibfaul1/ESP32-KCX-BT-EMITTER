@@ -193,7 +193,7 @@ void KCX_BT_Emitter::parseATcmds(){
     if(startsWith(m_chbuf, "CMD ERR!"))             { cmd_Wrong();                                          m_Answ = -90;  ie = 0; goto P2;}
     if(strlen(m_chbuf) < 4) {                                                                               m_Answ = - 1;  ie = 1; goto exit;}
 
-    log_w("unknown message %s", m_chbuf);
+    // log_w("unknown message %s", m_chbuf);
     goto exit;
 
 P0:
